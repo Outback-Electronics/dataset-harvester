@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dataset Harvester - Enhanced Download Manager</title>
+    <style>
+        /* Enhanced dark theme styling */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #e0e0e0;
+            line-height: 1.6;
+            padding: 10px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 10px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px 0;
+        }
+
+        h1 {
+            color: #4a9eff;
+            font-size: clamp(1.8rem, 4vw, 3rem);
+            text-shadow: 0 2px 4px rgba(74, 158, 255, 0.3);
+            margin-bottom: 10px;
+        }
+
+        .server-info {
+            font-size: 0.9rem;
+            color: #b0b0b0;
+            margin-top: 10px;
+        }
+
+        /* Tab Navigation */
+        .tab-navigation {
+            display: flex;
+            background: linear-gradient(135deg, #2d2d2d 0%, #3a3a3a 100%);
+            border-radius: 12px 12px 0 0;
+            margin-bottom: 0;
+            overflow-x: auto;
+        }
+
+        .tab-button {
+            flex: 1;
+            min-width: 150px;
+            padding: 15px 20px;
+            background: none;
+            border: none;
+            color: #b0b0b0;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+        }
+
+        .tab-button:hover {
+            color: #4a9eff;
+            background: rgba(74, 158, 255, 0.1);
+        }
+
+        .tab-button.active {
+            color: #4a9eff;
+            border-bottom-color: #4a9eff;
+            background: rgba(74, 158, 255, 0.1);
+        }
+
+        .tab-content {
+            display: none;
+            background: linear-gradient(135deg, #2d2d2d 0%, #3a3a3a 100%);
+            border-radius: 0 0 12px 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .status-bar {
+            background: linear-gradient(135deg, #2d2d2d 0%, #3a3a3a 100%);
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border-left: 4px solid #4a9eff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .status-connected {
+            border-left-color: #4caf50;
+        }
+
+        .status-disconnected {
+            border-left-color: #f44336;
+        }
+
+        .status-main {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .status-stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            font-size: 0.85rem;
+            color: #b0b0b0;
+        }
+
+        .add-download-section {
+            padding: 25px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 15px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            color: #b0b0b0;
+            margin-bottom: 8px;
+        }
+
+        .url-input, .dir-input {
+            width: 100%;
+            padding: 12px 15px;
+            background-color: #404040;
+            border: 2px solid #555;
+            border-radius: 8px;
+            color: #e0e0e0;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .url-input:focus, .dir-input:focus {
+            outline: none;
+            border-color: #4a9eff;
+            box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.1);
+            background-color: #4a4a4a;
+        }
+
+        .dir-input {
+            max-width: 200px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4a9eff 0%, #357abd 100%);
+            color: white;
+            box-shadow: 0 2px 4px rgba(74, 158, 255, 0.3);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(74, 158, 255, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+            color: white;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ff9800 0%, #e68900 100%);
+            color: white;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f44336 0%, #da190b 100%);
+            color: white;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+            color: white;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+
+        .btn-success:hover, .btn-warning:hover, .btn-danger:hover, .btn-info:hover {
+            transform: translateY(-1px);
+        }
+
+        .section-header {
+            background: linear-gradient(135deg, #3a3a3a 0%, #4a4a4a 100%);
+            padding: 20px 25px;
+            border-bottom: 2px solid #4a9eff;
+        }
+
+        .section-title {
+            font-size: 1.4em;
+            font-weight: 600;
+            color: #4a9eff;
+            margin-bottom: 5px;
+        }
+
+        .section-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-size: 0.9em;
+            color: #b0b0b0;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            padding: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #2d2d2d;
+        }
+
+        th, td {
+            padding: 15px 20px;
+            text-align: left;
+            border-bottom: 1px solid #404040;
+        }
+
+        th {
+            background: linear-gradient(135deg, #3a3a3a 0%, #4a4a4a 100%);
+            font-weight: 600;
+            color: #4a9eff;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.9em;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        tr:hover {
+            background: linear-gradient(135deg, #333333 0%, #404040 100%);
+        }
+
+        .status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-block;
+        }
+
+        .status-active {
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+            color: white;
+        }
+
+        .status-paused {
+            background: linear-gradient(135deg, #ff9800 0%, #e68900 100%);
+            color: white;
+        }
+
+        .status-complete {
+            background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+            color: white;
+        }
+
+        .status-error {
+            background: linear-gradient(135deg, #f44336 0%, #da190b 100%);
+            color: white;
+        }
+
+        .progress-container {
+            margin-top: 8px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #404040;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4a9eff 0%, #357abd 100%);
+            transition: width 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .progress-text {
+            font-size: 0.85em;
+            color: #b0b0b0;
+        }
+
+        .file-info {
+            margin-top: 5px;
+            font-size: 0.8em;
+            color: #888;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .message {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message-success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4caf50;
+            color: #4caf50;
+        }
+
+        .message-error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid #f44336;
+            color: #f44336;
+        }
+
+        .message-warning {
+            background: rgba(255, 152, 0, 0.2);
+            border: 1px solid #ff9800;
+            color: #ff9800;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #b0b0b0;
+        }
+
+        .empty-state-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        /* File Manager Specific Styles */
+        .file-manager {
+            padding: 25px;
+        }
+
+        .breadcrumb {
+            background: #404040;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-family: monospace;
+            font-size: 14px;
+            color: #e0e0e0;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        .file-row {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #404040;
+            transition: background 0.2s ease;
+        }
+
+        .file-row:hover {
+            background: rgba(74, 158, 255, 0.1);
+        }
+
+        .file-icon {
+            width: 40px;
+            text-align: center;
+            font-size: 1.5em;
+            margin-right: 15px;
+        }
+
+        .file-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: #e0e0e0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+        .file-name:hover {
+            color: #4a9eff;
+        }
+
+        .file-meta {
+            font-size: 0.85em;
+            color: #b0b0b0;
+            margin-top: 4px;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .archive-badge {
+            background: linear-gradient(135deg, #4a9eff 0%, #357abd 100%);
+            color: white;
+            font-size: 0.7em;
+            padding: 2px 6px;
+            border-radius: 12px;
+            margin-left: 8px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #b0b0b0;
+        }
+
+        .spinner {
+            border: 3px solid #404040;
+            border-top: 3px solid #4a9eff;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Mobile optimization */
+        @media (max-width: 768px) {
+            .tab-navigation {
+                overflow-x: auto;
+            }
+            
+            .tab-button {
+                min-width: 120px;
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+
+            .input-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .input-wrapper, .dir-input {
+                min-width: unset;
+                max-width: unset;
+            }
+
+            .actions, .file-actions {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+
+            .file-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .file-details {
+                width: 100%;
+            }
+
+            .file-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            th, td {
+                padding: 10px 8px;
+                font-size: 0.9rem;
+            }
+
+            .btn {
+                padding: 10px 16px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌐 Dataset Harvester</h1>
+            <div class="server-info">
+                Enhanced Download Manager | Server: <span id="serverUrl">Loading...</span>
+            </div>
+        </div>
+        
+        <!-- Status Bar -->
+        <div id="statusBar" class="status-bar">
+            <div class="status-main">
+                <span id="statusText">Checking connection...</span>
+            </div>
+            <div id="statusStats" class="status-stats"></div>
+        </div>
+
+        <!-- Messages -->
+        <div id="messageContainer"></div>
+
+        <!-- Tab Navigation -->
+        <div class="tab-navigation">
+            <button class="tab-button active" onclick="switchTab('downloads')">📥 Downloads</button>
+            <button class="tab-button" onclick="switchTab('files')">📁 File Manager</button>
+        </div>
+
+        <!-- Downloads Tab -->
+        <div id="downloadsTab" class="tab-content active">
+            <!-- Add Download Section -->
+            <div class="add-download-section">
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <label for="urlInput">Download URL:</label>
+                        <input 
+                            type="url" 
+                            id="urlInput" 
+                            class="url-input" 
+                            placeholder="Enter download URL (http://, https://, ftp://, magnet:)"
+                            required
+                        >
+                    </div>
+                    <div>
+                        <label for="dirInput">Directory (optional):</label>
+                        <input 
+                            type="text" 
+                            id="dirInput" 
+                            class="dir-input" 
+                            placeholder="subfolder"
+                        >
+                    </div>
+                    <button id="addBtn" class="btn btn-primary">Add Download</button>
+                </div>
+            </div>
+
+            <!-- Downloads Table -->
+            <div class="section-header">
+                <div class="section-title">Active Downloads</div>
+                <div class="section-meta">
+                    <div>Last updated: <span id="lastUpdated">Never</span></div>
+                    <div>Total: <span id="downloadCount">0</span> downloads</div>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <table id="downloadsTable">
+                    <thead>
+                        <tr>
+                            <th>File</th>
+                            <th>Status</th>
+                            <th>Progress</th>
+                            <th>Speed</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="downloadsBody">
+                        <!-- Downloads will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- File Manager Tab -->
+        <div id="filesTab" class="tab-content">
+            <div class="file-manager">
+                <div class="breadcrumb" id="breadcrumb">
+                    📁 /var/downloads
+                </div>
+                
+                <div class="section-header" style="margin: 0 -25px 20px -25px;">
+                    <div class="section-title">File Manager</div>
+                    <div class="section-meta">
+                        <div>Files: <span id="fileCount">0</span></div>
+                        <div>
+                            <button class="btn btn-info" onclick="refreshFiles()">🔄 Refresh</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="filesList">
+                    <!-- Files will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const API_BASE = window.location.origin;
+        const REFRESH_INTERVAL = 3000;
+
+        // Global variables
+        let refreshInterval;
+        let isLoading = false;
+        let reconnectAttempts = 0;
+        let currentPath = '';
+        let activeTab = 'downloads';
+        const MAX_RECONNECT_ATTEMPTS = 5;
+
+        // DOM elements
+        const urlInput = document.getElementById('urlInput');
+        const dirInput = document.getElementById('dirInput');
+        const addBtn = document.getElementById('addBtn');
+        const downloadsBody = document.getElementById('downloadsBody');
+        const messageContainer = document.getElementById('messageContainer');
+        const statusBar = document.getElementById('statusBar');
+        const statusText = document.getElementById('statusText');
+        const statusStats = document.getElementById('statusStats');
+        const lastUpdated = document.getElementById('lastUpdated');
+        const downloadCount = document.getElementById('downloadCount');
+        const serverUrl = document.getElementById('serverUrl');
+        const filesList = document.getElementById('filesList');
+        const breadcrumb = document.getElementById('breadcrumb');
+        const fileCount = document.getElementById('fileCount');
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Enhanced Dataset Harvester initialized');
+            
+            serverUrl.textContent = window.location.host;
+            
+            // Set up event listeners
+            addBtn.addEventListener('click', addDownload);
+            urlInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addDownload();
+                }
+            });
+
+            urlInput.focus();
+
+            // Check initial connection and start refresh
+            checkConnection();
+            loadDownloads();
+            loadFiles();
+            startAutoRefresh();
+        });
+
+        // Tab switching
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            
+            activeTab = tabName;
+            
+            // Load data for the active tab
+            if (tabName === 'files') {
+                loadFiles();
+            } else if (tabName === 'downloads') {
+                loadDownloads();
+            }
+        }
+
+        // Enhanced connection check
+        async function checkConnection() {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+                const response = await fetch(`${API_BASE}/status`, {
+                    signal: controller.signal,
+                    cache: 'no-cache'
+                });
+                clearTimeout(timeoutId);
+
+                const data = await response.json();
+                
+                if (response.ok && data.status === 'connected') {
+                    const total = data.active_downloads + data.waiting_downloads + (data.stopped_downloads || 0);
+                    updateStatus(true, `Connected to aria2c v${data.aria2_version}`, {
+                        'Active': data.active_downloads,
+                        'Waiting': data.waiting_downloads,
+                        'Files': data.total_files || 0,
+                        'Storage': data.total_size || '0 B',
+                        'Down Speed': data.download_speed
+                    });
+                    reconnectAttempts = 0;
+                } else {
+                    updateStatus(false, `Server Error: ${data.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                reconnectAttempts++;
+                let message = 'Connection failed';
+                
+                if (error.name === 'AbortError') {
+                    message = 'Connection timeout';
+                } else if (reconnectAttempts <= MAX_RECONNECT_ATTEMPTS) {
+                    message = `Reconnecting... (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`;
+                    setTimeout(checkConnection, 2000 * reconnectAttempts);
+                } else {
+                    message = 'Server unavailable - check network connection';
+                }
+                
+                updateStatus(false, message);
+                console.error('Connection check failed:', error);
+            }
+        }
+
+        function updateStatus(connected, message, stats = null) {
+            statusBar.className = `status-bar ${connected ? 'status-connected' : 'status-disconnected'}`;
+            statusText.textContent = message;
+            
+            if (stats) {
+                statusStats.innerHTML = Object.entries(stats)
+                    .map(([key, value]) => `<span>${key}: <strong>${value}</strong></span>`)
+                    .join('');
+            } else {
+                statusStats.innerHTML = '';
+            }
+        }
+
+        function showMessage(message, type = 'success', duration = 5000) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message message-${type}`;
+            messageDiv.textContent = message;
+            
+            messageContainer.innerHTML = '';
+            messageContainer.appendChild(messageDiv);
+            
+            if (duration > 0) {
+                setTimeout(() => {
+                    if (messageContainer.contains(messageDiv)) {
+                        messageDiv.style.animation = 'slideIn 0.3s ease reverse';
+                        setTimeout(() => messageContainer.removeChild(messageDiv), 300);
+                    }
+                }, duration);
+            }
+        }
+
+        function isValidUrl(string) {
+            try {
+                const url = new URL(string);
+                return ['http:', 'https:', 'ftp:'].includes(url.protocol) || string.startsWith('magnet:');
+            } catch (_) {
+                return string.startsWith('magnet:');
+            }
+        }
+
+        async function addDownload() {
+            const url = urlInput.value.trim();
+            const dir = dirInput.value.trim();
+            
+            if (!url) {
+                showMessage('Please enter a valid URL', 'error');
+                urlInput.focus();
+                return;
+            }
+
+            if (!isValidUrl(url)) {
+                showMessage('Please enter a valid URL (http://, https://, ftp://, or magnet:)', 'error');
+                urlInput.focus();
+                return;
+            }
+
+            try {
+                addBtn.disabled = true;
+                addBtn.textContent = 'Adding...';
+
+                const payload = { url: url };
+                if (dir) {
+                    payload.dir = dir;
+                }
+
+                const response = await fetch(`${API_BASE}/downloads`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage(`Download added: ${data.download.name}`, 'success');
+                    urlInput.value = '';
+                    dirInput.value = '';
+                    urlInput.focus();
+                    loadDownloads();
+                } else {
+                    if (response.status === 429) {
+                        showMessage('Rate limit exceeded. Please wait before adding more downloads.', 'warning');
+                    } else {
+                        showMessage(`Failed to add download: ${data.error}`, 'error');
+                    }
+                }
+            } catch (error) {
+                console.error('Error adding download:', error);
+                showMessage('Failed to add download: Network error', 'error');
+            } finally {
+                addBtn.disabled = false;
+                addBtn.textContent = 'Add Download';
+            }
+        }
+
+        async function loadDownloads() {
+            if (isLoading || activeTab !== 'downloads') return;
+            
+            try {
+                isLoading = true;
+                const response = await fetch(`${API_BASE}/downloads`, {
+                    cache: 'no-cache'
+                });
+                
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || `HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                displayDownloads(data.downloads || []);
+                downloadCount.textContent = data.count || 0;
+                lastUpdated.textContent = new Date().toLocaleTimeString();
+                
+            } catch (error) {
+                console.error('Error loading downloads:', error);
+                showEmptyState(`Failed to load downloads: ${error.message}`);
+            } finally {
+                isLoading = false;
+            }
+        }
+
+        function displayDownloads(downloads) {
+            if (downloads.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            const tbody = downloadsBody;
+            tbody.innerHTML = '';
+
+            downloads.forEach(download => {
+                const row = createDownloadRow(download);
+                tbody.appendChild(row);
+            });
+        }
+
+        function createDownloadRow(download) {
+            const row = document.createElement('tr');
+            
+            let statusClass = 'status-active';
+            if (download.status === 'paused') statusClass = 'status-paused';
+            else if (download.status === 'complete') statusClass = 'status-complete';
+            else if (download.status === 'error') statusClass = 'status-error';
+
+            const progressColor = download.progress === 100 ? '#4caf50' : '#4a9eff';
+            
+            row.innerHTML = `
+                <td>
+                    <div style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${download.name}">
+                        <strong>${download.name}</strong>
+                    </div>
+                    <div class="file-info">
+                        ${download.completed_size} / ${download.total_size}
+                    </div>
+                </td>
+                <td>
+                    <span class="status ${statusClass}">${download.status}</span>
+                </td>
+                <td>
+                    <div class="progress-container">
+                        <div class="progress-text">${download.progress}%</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${download.progress}%; background-color: ${progressColor}"></div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div>${download.download_speed}</div>
+                    ${download.eta !== 'Unknown' ? `<div class="file-info">ETA: ${download.eta}</div>` : ''}
+                </td>
+                <td>
+                    <div class="actions">
+                        ${download.status === 'active' ? 
+                            `<button class="btn btn-warning" onclick="pauseDownload('${download.gid}')">Pause</button>` :
+                            download.status === 'paused' ?
+                            `<button class="btn btn-success" onclick="resumeDownload('${download.gid}')">Resume</button>` :
+                            ''
+                        }
+                        <button class="btn btn-danger" onclick="removeDownload('${download.gid}')">Remove</button>
+                    </div>
+                </td>
+            `;
+
+            return row;
+        }
+
+        function showEmptyState(message = 'No downloads found') {
+            downloadsBody.innerHTML = `
+                <tr>
+                    <td colspan="5">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📦</div>
+                            <div>${message}</div>
+                            ${message === 'No downloads found' ? '<p>Add a download URL above to get started!</p>' : ''}
+                        </div>
+                    </td>
+                </tr>
+            `;
+            downloadCount.textContent = '0';
+        }
+
+        // File Manager Functions
+        async function loadFiles(path = '') {
+            if (activeTab !== 'files') return;
+            
+            try {
+                filesList.innerHTML = '<div class="loading"><div class="spinner"></div>Loading files...</div>';
+                
+                const url = path ? `${API_BASE}/files?path=${encodeURIComponent(path)}` : `${API_BASE}/files`;
+                console.log('API Request URL:', url);  // Debug log
+                const response = await fetch(url, { cache: 'no-cache' });
+                
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || `HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                currentPath = data.current_path;
+                displayFiles(data.files, data.parent_path);
+                fileCount.textContent = data.count || 0;
+                updateBreadcrumb(data.current_path, data.download_dir);
+                
+            } catch (error) {
+                console.error('Error loading files:', error);
+                filesList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">❌</div>
+                        <div>Failed to load files: ${error.message}</div>
+                    </div>
+                `;
+            }
+        }
+
+        function displayFiles(files, parentPath) {
+            if (files.length === 0) {
+                filesList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📁</div>
+                        <div>No files found in this directory</div>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            
+            // Add parent directory link if not at root
+            if (parentPath) {
+                html += createFileRow({
+                    name: '..',
+                    is_directory: true,
+                    path: parentPath,
+                    isParent: true
+                });
+            }
+            
+            files.forEach(file => {
+                html += createFileRow(file);
+            });
+            
+            filesList.innerHTML = html;
+        }
+
+        function createFileRow(file) {
+            const icon = getFileIcon(file);
+            const isParent = file.isParent;
+            
+            return `
+                <div class="file-row">
+                    <div class="file-icon">${icon}</div>
+                    <div class="file-details">
+                        <div class="file-name" onclick="${isParent ? `loadFiles('${file.path}')` : file.is_directory ? `loadFiles('${file.path}')` : 'void(0)'}"
+                             ${!isParent && !file.is_directory ? `title="Click to download"` : ''}>
+                            ${file.name}
+                            ${file.can_extract ? '<span class="archive-badge">Archive</span>' : ''}
+                        </div>
+                        ${!isParent ? `
+                            <div class="file-meta">
+                                ${file.is_directory ? 'Directory' : file.size_formatted} • ${file.modified_formatted}
+                            </div>
+                        ` : '<div class="file-meta">Parent Directory</div>'}
+                    </div>
+                    ${!isParent ? `
+                        <div class="file-actions">
+                            ${file.can_extract ? `<button class="btn btn-info" onclick="extractFile('${file.path}')">📦 Extract</button>` : ''}
+                            ${!file.is_directory ? `<button class="btn btn-success" onclick="downloadFile('${file.path}')">⬇️ Download</button>` : ''}
+                            <button class="btn btn-danger" onclick="deleteFile('${file.path}', ${file.is_directory})">🗑️ Delete</button>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function getFileIcon(file) {
+            if (file.isParent) return '⬆️';
+            if (file.is_directory) return '📁';
+            
+            const ext = file.extension;
+            if (['.zip', '.rar', '.7z', '.tar', '.gz'].includes(ext)) return '📦';
+            if (['.mp4', '.avi', '.mkv', '.mov'].includes(ext)) return '🎬';
+            if (['.mp3', '.wav', '.flac', '.m4a'].includes(ext)) return '🎵';
+            if (['.jpg', '.jpeg', '.png', '.gif', '.bmp'].includes(ext)) return '🖼️';
+            if (['.pdf'].includes(ext)) return '📄';
+            if (['.txt', '.md'].includes(ext)) return '📝';
+            if (['.exe', '.dmg', '.deb', '.rpm'].includes(ext)) return '⚙️';
+            
+            return '📄';
+        }
+
+        function updateBreadcrumb(currentPath, downloadDir) {
+            const relativePath = currentPath.replace(downloadDir, '');
+            breadcrumb.textContent = `📁 ${downloadDir}${relativePath || ''}`;
+        }
+
+        function refreshFiles() {
+            loadFiles(currentPath);
+        }
+
+        async function extractFile(filePath) {
+            if (!confirm('Extract this archive?')) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/files/extract`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ file_path: filePath })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showMessage(`Archive extracted successfully to: ${data.extract_path}`, 'success');
+                    loadFiles(currentPath);
+                } else {
+                    showMessage(`Failed to extract: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error extracting file:', error);
+                showMessage('Failed to extract file: Network error', 'error');
+            }
+        }
+
+        async function deleteFile(filePath, isDirectory) {
+            const type = isDirectory ? 'directory' : 'file';
+            if (!confirm(`Are you sure you want to delete this ${type}? This action cannot be undone.`)) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/files/delete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ file_path: filePath })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showMessage(`${isDirectory ? 'Directory' : 'File'} deleted successfully`, 'success');
+                    loadFiles(currentPath);
+                } else {
+                    showMessage(`Failed to delete: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error deleting file:', error);
+                showMessage('Failed to delete file: Network error', 'error');
+            }
+        }
+
+        function downloadFile(filePath) {
+            const fileName = filePath.split('/').pop();
+            const relativePath = filePath.replace(/^.*\/downloads\//, '');
+            window.open(`${API_BASE}/files/download/${relativePath}`, '_blank');
+        }
+
+        // Download control functions
+        async function pauseDownload(gid) {
+            await controlDownload(gid, 'pause', 'paused');
+        }
+
+        async function resumeDownload(gid) {
+            await controlDownload(gid, 'resume', 'resumed');
+        }
+
+        async function removeDownload(gid) {
+            if (!confirm('Are you sure you want to remove this download?')) {
+                return;
+            }
+            await controlDownload(gid, 'remove', 'removed');
+        }
+
+        async function controlDownload(gid, action, pastTense) {
+            try {
+                const response = await fetch(`${API_BASE}/downloads/${gid}/${action}`, {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage(`Download ${pastTense} successfully`, 'success');
+                    loadDownloads();
+                } else {
+                    showMessage(`Failed to ${action}: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                console.error(`Error ${action}ing download:`, error);
+                showMessage(`Failed to ${action} download: Network error`, 'error');
+            }
+        }
+
+        function startAutoRefresh() {
+            refreshInterval = setInterval(() => {
+                if (!document.hidden) {
+                    if (activeTab === 'downloads') {
+                        loadDownloads();
+                    } else if (activeTab === 'files') {
+                        loadFiles(currentPath);
+                    }
+                    checkConnection();
+                }
+            }, REFRESH_INTERVAL);
+        }
+
+        function stopAutoRefresh() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
+        }
+
+        // Handle page visibility changes
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                stopAutoRefresh();
+            } else {
+                if (activeTab === 'downloads') {
+                    loadDownloads();
+                } else if (activeTab === 'files') {
+                    loadFiles(currentPath);
+                }
+                checkConnection();
+                startAutoRefresh();
+            }
+        });
+
+        // Handle network online/offline
+        window.addEventListener('online', function() {
+            showMessage('Connection restored', 'success', 3000);
+            checkConnection();
+            if (activeTab === 'downloads') {
+                loadDownloads();
+            } else if (activeTab === 'files') {
+                loadFiles(currentPath);
+            }
+        });
+
+        window.addEventListener('offline', function() {
+            showMessage('Connection lost - working offline', 'warning', 0);
+            updateStatus(false, 'Offline - no network connection');
+        });
+    </script>
+</body>
+</html>

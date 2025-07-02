@@ -1,0 +1,276 @@
+# Dataset Harvester - Setup Instructions
+
+## 📋 Prerequisites
+
+- Python 3.7 or higher
+- aria2c (aria2 command-line utility)
+- Web browser (Chrome, Firefox, Safari, Edge)
+
+## 🚀 Installation
+
+### Step 1: Install aria2c
+
+#### On Ubuntu/Debian:
+```bash
+sudo apt-get update
+sudo apt-get install aria2
+```
+
+#### On macOS (using Homebrew):
+```bash
+brew install aria2
+```
+
+#### On Windows:
+1. Download aria2 from: https://github.com/aria2/aria2/releases
+2. Extract to a folder (e.g., `C:\aria2\`)
+3. Add the folder to your system PATH
+
+#### On CentOS/RHEL/Fedora:
+```bash
+# CentOS/RHEL
+sudo yum install aria2
+# or Fedora
+sudo dnf install aria2
+```
+
+### Step 2: Install Python Dependencies
+
+```bash
+# Install Flask and aria2p (system-wide as requested)
+pip install flask aria2p flask-cors
+
+# If you get permission errors, use:
+sudo pip install flask aria2p flask-cors
+```
+
+### Step 3: Create Project Directory
+
+```bash
+mkdir dataset-harvester
+cd dataset-harvester
+
+# Create downloads directory
+mkdir downloads
+```
+
+### Step 4: Save Project Files
+
+1. Save the Flask backend as `app.py`
+2. Save the frontend as `index.html`
+3. Save the configuration as `aria2.conf` (optional but recommended)
+
+## 🔧 Running the Application
+
+### Step 1: Start aria2c with RPC Enabled
+
+Choose one of the following methods:
+
+#### Method A: Using the provided configuration file
+```bash
+aria2c --conf-path=aria2.conf
+```
+
+#### Method B: Command line with basic options
+```bash
+aria2c --enable-rpc --rpc-listen-all --rpc-allow-origin-all --dir=./downloads
+```
+
+#### Method C: Command line with advanced options
+```bash
+aria2c \
+  --enable-rpc \
+  --rpc-listen-all \
+  --rpc-allow-origin-all \
+  --rpc-listen-port=6800 \
+  --dir=./downloads \
+  --max-connection-per-server=4 \
+  --max-concurrent-downloads=5 \
+  --continue=true \
+  --file-allocation=prealloc
+```
+
+**Important:** Keep this terminal window open! aria2c must remain running.
+
+### Step 2: Start the Flask Backend
+
+In a new terminal window:
+
+```bash
+cd dataset-harvester
+python app.py
+```
+
+You should see output like:
+```
+Dataset Harvester - Starting Flask Backend
+=========================================
+✓ Connected to aria2c daemon
+✓ Starting Flask server on http://localhost:5000
+✓ Frontend should be accessible via index.html
+```
+
+### Step 3: Open the Web Interface
+
+Open `index.html` in your web browser:
+
+#### Option A: Double-click the file
+Simply double-click `index.html` in your file explorer.
+
+#### Option B: Open via browser
+1. Open your web browser
+2. Press `Ctrl+O` (or `Cmd+O` on Mac)
+3. Navigate to and select `index.html`
+
+#### Option C: Use a local web server (if needed)
+```bash
+# Python 3
+python -m http.server 8080
+
+# Then visit: http://localhost:8080
+```
+
+## 🎯 Using the Application
+
+1. **Check Connection**: The status bar should show "Connected to aria2c"
+2. **Add Download**: Enter a URL and click "Add Download"
+3. **Monitor Progress**: Downloads will appear in the table with progress bars
+4. **Control Downloads**: Use Pause/Resume/Remove buttons
+5. **Auto-Refresh**: The interface updates every 5 seconds automatically
+
+## 🛠️ Troubleshooting
+
+### Problem: "aria2c daemon not connected"
+
+**Solutions:**
+1. Make sure aria2c is running with RPC enabled
+2. Check if port 6800 is available:
+   ```bash
+   netstat -an | grep 6800
+   ```
+3. Try restarting aria2c
+4. Verify aria2c is listening on all interfaces:
+   ```bash
+   aria2c --enable-rpc --rpc-listen-all --rpc-allow-origin-all
+   ```
+
+### Problem: "Backend server not available"
+
+**Solutions:**
+1. Ensure Flask app is running on port 5000
+2. Check if Python dependencies are installed:
+   ```bash
+   python -c "import flask, aria2p; print('Dependencies OK')"
+   ```
+3. Try different port:
+   ```bash
+   python app.py
+   ```
+
+### Problem: CORS errors in browser
+
+**Solutions:**
+1. Make sure `flask-cors` is installed
+2. Try opening the HTML file via a local web server instead of file://
+3. Check browser console for specific error messages
+
+### Problem: Downloads not starting
+
+**Solutions:**
+1. Check download directory permissions
+2. Verify the URL is accessible
+3. Check aria2c logs for error messages
+4. Try downloading the URL manually with aria2c:
+   ```bash
+   aria2c "your-url-here"
+   ```
+
+### Problem: Permission denied errors
+
+**Solutions:**
+1. Make sure the downloads directory is writable
+2. Check file permissions:
+   ```bash
+   chmod 755 downloads
+   ```
+3. Run with appropriate permissions
+
+## 📁 Project Structure
+
+```
+dataset-harvester/
+├── app.py              # Flask backend
+├── index.html          # Web interface
+├── aria2.conf          # aria2 configuration (optional)
+└── downloads/          # Download directory
+    └── (downloaded files will appear here)
+```
+
+## 🔧 Advanced Configuration
+
+### Custom Download Directory
+
+Edit `aria2.conf` or use command line:
+```bash
+aria2c --enable-rpc --rpc-listen-all --rpc-allow-origin-all --dir=/path/to/downloads
+```
+
+### RPC Authentication
+
+Add to `aria2.conf`:
+```
+rpc-secret=your_secret_here
+```
+
+Then update `app.py` line 20:
+```python
+secret="your_secret_here"
+```
+
+### Different Ports
+
+For aria2c:
+```bash
+aria2c --enable-rpc --rpc-listen-port=6801 --rpc-listen-all --rpc-allow-origin-all
+```
+
+Update `app.py` line 19:
+```python
+port=6801
+```
+
+For Flask:
+```bash
+python app.py
+# Edit app.py, change the last line to:
+# app.run(debug=True, host='0.0.0.0', port=5001)
+```
+
+## 🚦 API Endpoints
+
+The Flask backend provides these REST API endpoints:
+
+- `GET /downloads` - List all downloads
+- `POST /downloads` - Add new download (JSON: `{"url": "http://..."}`)
+- `POST /downloads/<gid>/pause` - Pause download
+- `POST /downloads/<gid>/resume` - Resume download
+- `POST /downloads/<gid>/remove` - Remove download
+- `GET /status` - Check connection status
+
+## 📝 Notes
+
+- Downloads are saved to the `downloads/` directory by default
+- The interface auto-refreshes every 5 seconds
+- Progress is shown as percentage with one decimal place
+- Download speeds are formatted in human-readable units (B/s, KB/s, MB/s, GB/s)
+- The system supports HTTP, HTTPS, FTP, and BitTorrent downloads
+- Multiple concurrent downloads are supported (default: 5)
+
+## 🔍 Testing
+
+Test with these sample URLs:
+- Small file: `http://httpbin.org/bytes/1048576` (1MB)
+- Ubuntu ISO: `http://releases.ubuntu.com/20.04/ubuntu-20.04.6-desktop-amd64.iso`
+- Sample video: `https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4`
+
+Enjoy using Dataset Harvester! 🎉
