@@ -1,276 +1,170 @@
 # Dataset Harvester - Setup Instructions
 
-## 📋 Prerequisites
+## 🎯 Overview
 
-- Python 3.7 or higher
-- aria2c (aria2 command-line utility)
-- Web browser (Chrome, Firefox, Safari, Edge)
+Dataset Harvester is a web-based download manager with file management capabilities. It uses aria2c for downloading and provides a modern web interface for managing downloads and files.
 
-## 🚀 Installation
+## 🚀 Installation (Simple 3-Step Process)
 
-### Step 1: Install aria2c
-
-#### On Ubuntu/Debian:
-```bash
-sudo apt-get update
-sudo apt-get install aria2
-```
-
-#### On macOS (using Homebrew):
-```bash
-brew install aria2
-```
-
-#### On Windows:
-1. Download aria2 from: https://github.com/aria2/aria2/releases
-2. Extract to a folder (e.g., `C:\aria2\`)
-3. Add the folder to your system PATH
-
-#### On CentOS/RHEL/Fedora:
-```bash
-# CentOS/RHEL
-sudo yum install aria2
-# or Fedora
-sudo dnf install aria2
-```
-
-### Step 2: Install Python Dependencies
+### Step 1: Create Directory and Download Files
 
 ```bash
-# Install Flask and aria2p (system-wide as requested)
-pip install flask aria2p flask-cors
-
-# If you get permission errors, use:
-sudo pip install flask aria2p flask-cors
-```
-
-### Step 3: Create Project Directory
-
-```bash
+# Create project directory
 mkdir dataset-harvester
 cd dataset-harvester
 
-# Create downloads directory
-mkdir downloads
+# Download or copy these files into the directory:
+# - app.py (Flask backend)
+# - index.html (Web interface) 
+# - setup.sh (Automated installation script)
 ```
 
-### Step 4: Save Project Files
+### Step 2: Run the Setup Script
 
-1. Save the Flask backend as `app.py`
-2. Save the frontend as `index.html`
-3. Save the configuration as `aria2.conf` (optional but recommended)
-
-## 🔧 Running the Application
-
-### Step 1: Start aria2c with RPC Enabled
-
-Choose one of the following methods:
-
-#### Method A: Using the provided configuration file
-```bash
-aria2c --conf-path=aria2.conf
-```
-
-#### Method B: Command line with basic options
-```bash
-aria2c --enable-rpc --rpc-listen-all --rpc-allow-origin-all --dir=./downloads
-```
-
-#### Method C: Command line with advanced options
-```bash
-aria2c \
-  --enable-rpc \
-  --rpc-listen-all \
-  --rpc-allow-origin-all \
-  --rpc-listen-port=6800 \
-  --dir=./downloads \
-  --max-connection-per-server=4 \
-  --max-concurrent-downloads=5 \
-  --continue=true \
-  --file-allocation=prealloc
-```
-
-**Important:** Keep this terminal window open! aria2c must remain running.
-
-### Step 2: Start the Flask Backend
-
-In a new terminal window:
+The setup script handles everything automatically:
 
 ```bash
-cd dataset-harvester
-python app.py
+# Make the setup script executable
+chmod +x setup.sh
+
+# Run the installation (requires root/sudo)
+sudo ./setup.sh
 ```
 
-You should see output like:
+### Step 3: Done!
+
+That's it! The setup script automatically:
+- ✅ Installs all dependencies (Python, aria2, nginx, etc.)
+- ✅ Creates system user and proper permissions
+- ✅ Sets up systemd service for auto-start
+- ✅ Configures nginx reverse proxy with security
+- ✅ Sets up firewall rules
+- ✅ Creates desktop icons and start menu entries
+- ✅ Configures log rotation
+- ✅ Starts all services
+
+## 🖥️ Accessing Dataset Harvester
+
+After installation completes:
+
+### Web Browser Access
 ```
-Dataset Harvester - Starting Flask Backend
-=========================================
-✓ Connected to aria2c daemon
-✓ Starting Flask server on http://localhost:5000
-✓ Frontend should be accessible via index.html
+http://YOUR_SERVER_IP
 ```
+(The setup script displays your server's IP address)
 
-### Step 3: Open the Web Interface
+### Desktop Icon
+Click the **Dataset Harvester** icon that was created on your desktop
 
-Open `index.html` in your web browser:
+### Start Menu
+Find **Dataset Harvester** in your applications menu under Network/Internet
 
-#### Option A: Double-click the file
-Simply double-click `index.html` in your file explorer.
+## 🎛️ Service Management
 
-#### Option B: Open via browser
-1. Open your web browser
-2. Press `Ctrl+O` (or `Cmd+O` on Mac)
-3. Navigate to and select `index.html`
-
-#### Option C: Use a local web server (if needed)
+### Check Status
 ```bash
-# Python 3
-python -m http.server 8080
+sudo systemctl status dataset-harvester
+```
 
-# Then visit: http://localhost:8080
+### Control Service
+```bash
+# Start/Stop/Restart
+sudo systemctl start dataset-harvester
+sudo systemctl stop dataset-harvester
+sudo systemctl restart dataset-harvester
+
+# View logs
+sudo journalctl -u dataset-harvester -f
 ```
 
 ## 🎯 Using the Application
 
-1. **Check Connection**: The status bar should show "Connected to aria2c"
-2. **Add Download**: Enter a URL and click "Add Download"
-3. **Monitor Progress**: Downloads will appear in the table with progress bars
-4. **Control Downloads**: Use Pause/Resume/Remove buttons
-5. **Auto-Refresh**: The interface updates every 5 seconds automatically
+### Download Manager Tab
+- Add URLs for download (HTTP, HTTPS, FTP, BitTorrent)
+- Monitor progress with real-time updates
+- Pause, resume, and remove downloads
+- Organize into subdirectories
+
+### File Manager Tab
+- Browse downloaded files
+- Extract archives (ZIP, TAR, 7Z, RAR)
+- Download files to your computer
+- Delete files and directories
+
+## 📁 Important Directories
+
+| Directory | Purpose |
+|-----------|---------|
+| `/opt/dataset-harvester/` | Application files |
+| `/var/downloads/` | Downloaded files |
+| `/var/log/dataset-harvester/` | Application logs |
 
 ## 🛠️ Troubleshooting
 
-### Problem: "aria2c daemon not connected"
-
-**Solutions:**
-1. Make sure aria2c is running with RPC enabled
-2. Check if port 6800 is available:
-   ```bash
-   netstat -an | grep 6800
-   ```
-3. Try restarting aria2c
-4. Verify aria2c is listening on all interfaces:
-   ```bash
-   aria2c --enable-rpc --rpc-listen-all --rpc-allow-origin-all
-   ```
-
-### Problem: "Backend server not available"
-
-**Solutions:**
-1. Ensure Flask app is running on port 5000
-2. Check if Python dependencies are installed:
-   ```bash
-   python -c "import flask, aria2p; print('Dependencies OK')"
-   ```
-3. Try different port:
-   ```bash
-   python app.py
-   ```
-
-### Problem: CORS errors in browser
-
-**Solutions:**
-1. Make sure `flask-cors` is installed
-2. Try opening the HTML file via a local web server instead of file://
-3. Check browser console for specific error messages
-
-### Problem: Downloads not starting
-
-**Solutions:**
-1. Check download directory permissions
-2. Verify the URL is accessible
-3. Check aria2c logs for error messages
-4. Try downloading the URL manually with aria2c:
-   ```bash
-   aria2c "your-url-here"
-   ```
-
-### Problem: Permission denied errors
-
-**Solutions:**
-1. Make sure the downloads directory is writable
-2. Check file permissions:
-   ```bash
-   chmod 755 downloads
-   ```
-3. Run with appropriate permissions
-
-## 📁 Project Structure
-
-```
-dataset-harvester/
-├── app.py              # Flask backend
-├── index.html          # Web interface
-├── aria2.conf          # aria2 configuration (optional)
-└── downloads/          # Download directory
-    └── (downloaded files will appear here)
-```
-
-## 🔧 Advanced Configuration
-
-### Custom Download Directory
-
-Edit `aria2.conf` or use command line:
+### Service Issues
 ```bash
-aria2c --enable-rpc --rpc-listen-all --rpc-allow-origin-all --dir=/path/to/downloads
+# Check service status
+sudo systemctl status dataset-harvester
+
+# View detailed logs
+sudo journalctl -u dataset-harvester -n 50
+
+# Restart everything
+sudo systemctl restart dataset-harvester nginx
 ```
 
-### RPC Authentication
-
-Add to `aria2.conf`:
-```
-rpc-secret=your_secret_here
-```
-
-Then update `app.py` line 20:
-```python
-secret="your_secret_here"
-```
-
-### Different Ports
-
-For aria2c:
+### Can't Access Web Interface
 ```bash
-aria2c --enable-rpc --rpc-listen-port=6801 --rpc-listen-all --rpc-allow-origin-all
+# Check if services are running
+sudo systemctl status nginx dataset-harvester
+
+# Test local connection
+curl http://localhost/health
 ```
 
-Update `app.py` line 19:
-```python
-port=6801
-```
-
-For Flask:
+### Downloads Not Working
 ```bash
-python app.py
-# Edit app.py, change the last line to:
-# app.run(debug=True, host='0.0.0.0', port=5001)
+# Check aria2c logs
+sudo tail -f /var/downloads/aria2.log
+
+# Restart service
+sudo systemctl restart dataset-harvester
 ```
 
-## 🚦 API Endpoints
+## 🔐 Security Notes
 
-The Flask backend provides these REST API endpoints:
+The setup script automatically configures:
+- ✅ Dedicated system user (non-root)
+- ✅ Firewall (SSH, HTTP, HTTPS only)
+- ✅ Nginx reverse proxy with rate limiting
+- ✅ Application sandboxing
+- ✅ Secure file permissions
 
-- `GET /downloads` - List all downloads
-- `POST /downloads` - Add new download (JSON: `{"url": "http://..."}`)
-- `POST /downloads/<gid>/pause` - Pause download
-- `POST /downloads/<gid>/resume` - Resume download
-- `POST /downloads/<gid>/remove` - Remove download
-- `GET /status` - Check connection status
+**Recommended:** Change the aria2 secret in `/opt/dataset-harvester/app.py` for production use.
 
-## 📝 Notes
+## 📊 Monitoring
 
-- Downloads are saved to the `downloads/` directory by default
-- The interface auto-refreshes every 5 seconds
-- Progress is shown as percentage with one decimal place
-- Download speeds are formatted in human-readable units (B/s, KB/s, MB/s, GB/s)
-- The system supports HTTP, HTTPS, FTP, and BitTorrent downloads
-- Multiple concurrent downloads are supported (default: 5)
+### View Logs
+```bash
+# Application logs
+sudo journalctl -u dataset-harvester -f
 
-## 🔍 Testing
+# Download logs  
+sudo tail -f /var/downloads/aria2.log
 
-Test with these sample URLs:
-- Small file: `http://httpbin.org/bytes/1048576` (1MB)
-- Ubuntu ISO: `http://releases.ubuntu.com/20.04/ubuntu-20.04.6-desktop-amd64.iso`
-- Sample video: `https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4`
+# Web server logs
+sudo tail -f /var/log/nginx/access.log
+```
 
-Enjoy using Dataset Harvester! 🎉
+### Check Resources
+```bash
+# Disk usage
+sudo du -sh /var/downloads/
+
+# Service status
+sudo systemctl status dataset-harvester
+```
+
+## 🎉 That's It!
+
+Your Dataset Harvester is ready to use. The setup script handled everything automatically - just open your browser or click the desktop icon to start downloading and managing files!
